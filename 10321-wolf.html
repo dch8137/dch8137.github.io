@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>狼人殺戰情室</title>
+    <style>
+        :root {
+            --bg: #0f172a;
+            --panel: #1e293b;
+            --accent: #ef4444;
+            --text: #f8fafc;
+            --gray: #94a3b8;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'PingFang TC', 'Microsoft JhengHei', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        header {
+            padding: 20px;
+            text-align: center;
+            background: linear-gradient(180deg, #1e293b 0%, var(--bg) 100%);
+            border-bottom: 2px solid var(--accent);
+        }
+
+        .main-layout {
+            display: grid;
+            grid-template-columns: 250px 1fr 250px;
+            gap: 20px;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .side-panel {
+            background: var(--panel);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        }
+
+        h3 { color: var(--accent); border-bottom: 1px solid #334155; padding-bottom: 10px; margin-top: 0; }
+
+        .role-tag {
+            display: block;
+            margin: 10px 0;
+            padding: 8px;
+            background: rgba(0,0,0,0.2);
+            border-radius: 5px;
+            font-size: 0.9rem;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            background: #000;
+            color: #10b981;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 15px;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1rem;
+            resize: none;
+        }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 15px; }
+
+        button {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        .btn-primary { background: var(--accent); color: white; }
+        .btn-primary:hover { background: #dc2626; }
+
+        .btn-outline { background: transparent; border: 1px solid var(--gray); color: var(--gray); margin-bottom: 8px; width: 100%; text-align: left; }
+        .btn-outline:hover { background: rgba(255,255,255,0.1); color: white; }
+
+        #visualBoard {
+            margin-top: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 10px;
+        }
+
+        .player-card {
+            background: #334155;
+            padding: 10px;
+            text-align: center;
+            border-radius: 8px;
+            font-size: 0.8rem;
+        }
+
+        .dead { opacity: 0.4; text-decoration: line-through; border: 1px dashed #ef4444; }
+        .werewolf-mark { color: #ef4444; font-weight: bold; }
+
+        #resultBanner {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.5rem;
+            font-weight: 800;
+            letter-spacing: 2px;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>WEREWOLF JUDGE SYSTEM</h1>
+    <div style="font-size: 0.8rem; color: var(--gray);">遊戲終局戰況自動判定工具</div>
+</header>
+
+<div class="main-layout">
+    <!-- 左側：規則參考 -->
+    <div class="side-panel">
+        <h3>身分定義 [1]</h3>
+        <div class="role-tag"><b style="color:#ef4444">-1</b> 狼人陣營</div>
+        <div class="role-tag"><b style="color:#fbbf24">0</b> 平民</div>
+        <div class="role-tag"><b style="color:#60a5fa">1</b> 神職</div>
+        
+        <h3 style="margin-top:25px">勝利規則 [1]</h3>
+        <p style="font-size:0.85rem; line-height:1.6; color:var(--gray)">
+            當有狼人存活時，狼人獲勝 (Werewolves)；<br><br>
+            若狼人全滅，則好人陣營獲勝 (Townsfolk)。
+        </p>
+    </div>
+
+    <!-- 中間：輸入與戰報 -->
+    <div class="center-content">
+        <textarea id="inputArea" placeholder="在此貼上遊戲序列數據..."></textarea>
+        <div class="btn-group">
+            <button class="btn-primary" onclick="processGame()">分析當前戰局</button>
+        </div>
+
+        <div id="resultBanner"></div>
+        <div id="visualBoard"></div>
+    </div>
+
+    <!-- 右側：範例加載 -->
+    <div class="side-panel">
+        <h3>快速載入範例 [1, 2]</h3>
+        <button class="btn-outline" onclick="loadEx(1)">範例 1 (狼人勝)</button>
+        <button class="btn-outline" onclick="loadEx(2)">範例 2 (好人勝)</button>
+        <button class="btn-outline" onclick="loadEx(3)">範例 3 (Wrong)</button>
+        
+        <div style="margin-top: 30px; font-size: 0.75rem; color: var(--gray);">
+            * 依照來源規範，輸入 0 代表主持人終止遊戲。
+        </div>
+    </div>
+</div>
+
+<script>
+    const examples = {
+        1: "6\n0 1 0 1 -1 -1\n1\n5\n3\n0",
+        2: "12\n0 -1 -1 0 1 1 0 -1 0 -1 1 1\n12\n2\n1\n3\n10\n11\n8\n0",
+        3: "6\n0 1 0 1 -1 -1\n1\n5\n1\n0"
+    };
+
+    function loadEx(id) {
+        document.getElementById('inputArea').value = examples[id];
+        processGame();
+    }
+
+    function processGame() {
+        const input = document.getElementById('inputArea').value.trim();
+        const tokens = input.split(/\s+/).map(Number);
+        const banner = document.getElementById('resultBanner');
+        const board = document.getElementById('visualBoard');
+        
+        board.innerHTML = ""; 
+        banner.style.display = "block";
+
+        if (tokens.length < 2) {
+            banner.innerText = "請輸入有效數據";
+            return;
+        }
+
+        let idx = 0;
+        const N = tokens[idx++];
+        const roles = [];
+        for (let i = 0; i < N; i++) roles.push(tokens[idx++]);
+
+        const eliminated = new Set();
+        let isWrong = false;
+
+        while (idx < tokens.length) {
+            const X = tokens[idx++];
+            if (X === 0) break;
+            if (eliminated.has(X)) {
+                isWrong = true;
+                break;
+            }
+            eliminated.add(X);
+        }
+
+        // 視覺化呈現
+        for (let i = 0; i < N; i++) {
+            const pId = i + 1;
+            const card = document.createElement('div');
+            card.className = `player-card ${eliminated.has(pId) ? 'dead' : ''}`;
+            const roleName = roles[i] === -1 ? '狼人' : (roles[i] === 1 ? '神職' : '平民');
+            card.innerHTML = `<div>#${pId}</div><div class="${roles[i]===-1?'werewolf-mark':''}">${roleName}</div>`;
+            board.appendChild(card);
+        }
+
+        if (isWrong) {
+            banner.innerText = "Wrong";
+            banner.style.background = "rgba(239, 68, 68, 0.2)";
+            banner.style.color = "#ef4444";
+        } else {
+            let werewolfAlive = false;
+            for (let i = 0; i < N; i++) {
+                if (roles[i] === -1 && !eliminated.has(i + 1)) {
+                    werewolfAlive = true;
+                    break;
+                }
+            }
+
+            if (werewolfAlive) {
+                banner.innerText = "Werewolves Win";
+                banner.style.background = "rgba(239, 68, 68, 0.2)";
+                banner.style.color = "#ef4444";
+            } else {
+                banner.innerText = "Townsfolk Win";
+                banner.style.background = "rgba(16, 185, 129, 0.2)";
+                banner.style.color = "#10b981";
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
