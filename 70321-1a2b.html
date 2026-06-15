@@ -3,205 +3,107 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>昆蟲大探險：1A2B 密碼尋寶</title>
+    <title>昆蟲王國 1A2B 優化版</title>
     <style>
-        :root {
-            --forest-green: #2d5a27;
-            --leaf-green: #7fb069;
-            --earth-brown: #5d4037;
-            --bug-red: #d32f2f;
-            --sun-yellow: #fdd835;
-        }
-
-        body {
-            background-color: #e8f5e9;
-            font-family: "Microsoft JhengHei", sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            margin: 0;
-            color: var(--earth-brown);
-        }
-
-        .game-container {
-            background: white;
-            padding: 2rem;
-            border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
-            border: 4px solid var(--leaf-green);
-            max-width: 400px;
-            width: 90%;
-            text-align: center;
-        }
-
-        h1 {
-            color: var(--forest-green);
-            margin-bottom: 0.5rem;
-        }
-
-        .instruction {
-            font-size: 0.9rem;
-            background: #f1f8e9;
-            padding: 10px;
-            border-radius: 10px;
-            margin-bottom: 1.5rem;
-            line-height: 1.6;
-        }
-
-        .input-group {
-            margin-bottom: 1.5rem;
-        }
-
-        input {
-            font-size: 1.5rem;
-            padding: 10px;
-            width: 150px;
-            text-align: center;
-            border: 2px solid var(--leaf-green);
-            border-radius: 10px;
-            outline: none;
-        }
-
-        button {
-            padding: 10px 20px;
-            font-size: 1.1rem;
-            cursor: pointer;
-            border: none;
-            border-radius: 10px;
-            transition: 0.3s;
-            margin: 5px;
-        }
-
-        .btn-guess {
-            background-color: var(--forest-green);
-            color: white;
-        }
-
-        .btn-guess:hover { background-color: var(--leaf-green); }
-
-        .btn-reset {
-            background-color: var(--bug-red);
-            color: white;
-        }
-
-        .history {
-            margin-top: 20px;
-            max-height: 200px;
-            overflow-y: auto;
-            text-align: left;
-            border-top: 2px dashed var(--leaf-green);
-            padding-top: 10px;
-        }
-
-        .history-item {
-            padding: 5px;
-            border-bottom: 1px solid #eee;
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .badge-a { color: #2e7d32; font-weight: bold; }
-        .badge-b { color: #f9a825; font-weight: bold; }
-        
-        .insect-deco { font-size: 2rem; margin-bottom: 10px; }
+        :root { --forest-green: #2d5a27; --leaf-green: #7fb069; --earth-brown: #5d4037; --bug-red: #e57373; }
+        body { font-family: sans-serif; background-color: #e8f5e9; color: var(--earth-brown); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .container { background: white; padding: 2rem; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 400px; width: 90%; text-align: center; border: 4px solid var(--leaf-green); }
+        h1 { color: var(--forest-green); }
+        .rules { background: #f1f8e9; padding: 10px; border-radius: 10px; font-size: 0.85rem; margin-bottom: 1.5rem; text-align: left; }
+        input { padding: 10px; font-size: 1.2rem; width: 150px; border: 2px solid var(--leaf-green); border-radius: 8px; text-align: center; letter-spacing: 5px; margin-bottom: 1rem; }
+        .btn-group { display: flex; gap: 10px; justify-content: center; }
+        button { padding: 10px 20px; font-size: 1rem; cursor: pointer; border: none; border-radius: 8px; color: white; }
+        .btn-guess { background-color: var(--forest-green); }
+        .btn-reset { background-color: var(--earth-brown); }
+        #history { margin-top: 1.5rem; max-height: 200px; overflow-y: auto; border-top: 1px solid #eee; padding-top: 1rem; }
+        .history-item { display: flex; justify-content: space-between; padding: 5px 15px; border-bottom: 1px dashed #ccc; }
     </style>
 </head>
 <body>
 
-<div class="game-container">
-    <div class="insect-deco">🐞 🦋 🐝 🐜</div>
-    <h1>昆蟲 1A2B</h1>
-    <div class="instruction">
-        發現神秘的昆蟲密碼了！<br>
-        請猜出 <strong>4 個不重複數字</strong>。<br>
-        <strong>A</strong>：數字與位置皆正確<br>
-        <strong>B</strong>：數字正確但位置錯誤 [1]
+<div class="container">
+    <div style="font-size: 3rem;">🐞🦋</div>
+    <h1>昆蟲王國 1A2B</h1>
+    
+    <div class="rules">
+        <strong>🌳 規則複習：</strong><br>
+        A：數字對、位置也對<br>
+        B：數字對、位置不對 [1]
     </div>
 
-    <div class="input-group">
-        <input type="text" id="guessInput" maxlength="4" placeholder="0-9 四位數" onkeypress="handleKeyPress(event)">
-        <br>
-        <button class="btn-guess" onclick="makeGuess()">捕捉答案！</button>
-        <button class="btn-reset" onclick="initGame()">重啟冒險</button>
+    <input type="text" id="userInput" maxlength="4" placeholder="????" onkeydown="if(event.key==='Enter') guess()">
+
+    <div class="btn-group">
+        <button class="btn-guess" onclick="guess()">🔍 觀察</button>
+        <button class="btn-reset" onclick="initGame()">🔄 重來</button>
     </div>
 
-    <div id="message" style="font-weight: bold; margin-bottom: 10px;"></div>
-
-    <div class="history" id="history">
-        <!-- 歷史紀錄會顯示在這裡 -->
-    </div>
+    <div id="history"></div>
 </div>
 
 <script>
-    let answer = "";
-    let attempts = 0;
+    let answerArray = [];
 
-    // 初始化遊戲，產生四個不重複數字 [1]
     function initGame() {
-        let nums = [1];
-        nums.sort(() => Math.random() - 0.5);
-        answer = nums.slice(0, 4).join('');
-        attempts = 0;
-        document.getElementById('history').innerHTML = "";
-        document.getElementById('message').innerText = "森林深處傳來了動靜... 開始猜吧！";
-        document.getElementById('guessInput').value = "";
-        console.log("答案已產生 (秘密):", answer); // 調試用
+        // 使用 Fisher-Yates 洗牌確保不重複且隨機
+        let pool = ['0','1','2','3','4','5','6','7','8','9'];
+        for (let i = pool.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        answerArray = pool.slice(0, 4);
+        
+        document.getElementById("history").innerHTML = "";
+        document.getElementById("userInput").value = "";
+        
+        // 偵錯用：您可以在瀏覽器 F12 控制台看到正確答案
+        console.log("正確答案是：", answerArray.join(""));
+        alert("新遊戲開始！");
     }
 
-    function makeGuess() {
-        const input = document.getElementById('guessInput').value;
-        const message = document.getElementById('message');
+    function guess() {
+        const inputStr = document.getElementById("userInput").value.trim();
         
-        // 檢查輸入合法性
-        if (input.length !== 4 || isNaN(input) || new Set(input).size !== 4) {
-            alert("請輸入 4 個不重複的數字喔！🦗");
+        // 基本驗證
+        if (inputStr.length !== 4 || isNaN(inputStr)) {
+            alert("請輸入 4 位數字！");
+            return;
+        }
+        
+        const inputArray = inputStr.split("");
+        if (new Set(inputArray).size !== 4) {
+            alert("數字不能重複！");
             return;
         }
 
-        attempts++;
         let a = 0;
         let b = 0;
 
-        // 比較邏輯 [1]
+        // 核心邏輯比對
         for (let i = 0; i < 4; i++) {
-            if (input[i] === answer[i]) {
-                a++;
-            } else if (answer.includes(input[i])) {
-                b++;
+            if (inputArray[i] === answerArray[i]) {
+                a++; // 數字與位置皆正確 [1]
+            } else if (answerArray.includes(inputArray[i])) {
+                b++; // 數字正確但位置不對 [1]
             }
         }
 
-        // 顯示結果
-        const history = document.getElementById('history');
-        const item = document.createElement('div');
-        item.className = 'history-item';
-        item.innerHTML = `
-            <span>第 ${attempts} 次探險: <strong>${input}</strong></span>
-            <span><span class="badge-a">${a}A</span> <span class="badge-b">${b}B</span></span>
-        `;
-        history.prepend(item);
+        // 顯示紀錄
+        const history = document.getElementById("history");
+        const div = document.createElement("div");
+        div.className = "history-item";
+        div.innerHTML = `<span>🍀 ${inputStr}</span> <b>${a}A ${b}B</b>`;
+        history.prepend(div);
+
+        document.getElementById("userInput").value = "";
 
         if (a === 4) {
-            message.innerHTML = `🎉 恭喜！你在第 ${attempts} 次成功捕捉到所有昆蟲！`;
-            alert(`太棒了！答案正是 ${answer}！你具備昆蟲大師的資質！`);
-        } else {
-            message.innerText = `加油！再觀察看看...`;
-        }
-
-        document.getElementById('guessInput').value = "";
-        document.getElementById('guessInput').focus();
-    }
-
-    function handleKeyPress(event) {
-        if (event.key === "Enter") {
-            makeGuess();
+            alert("太厲害了！完全正確！👑");
+            initGame();
         }
     }
 
-    // 頁面載入後啟動
     window.onload = initGame;
 </script>
-
 </body>
 </html>
